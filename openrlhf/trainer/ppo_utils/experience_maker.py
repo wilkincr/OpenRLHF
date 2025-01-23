@@ -125,6 +125,7 @@ class NaiveExperienceMaker(ABC):
         actor: Actor,
         critic: nn.Module,
         reward_model: nn.Module,
+        use_lora_disable: bool,
         initial_model: Actor,
         tokenizer,
         prompt_max_len: int,
@@ -138,6 +139,7 @@ class NaiveExperienceMaker(ABC):
         self.critic = critic
         self.reward_model = reward_model
         self.remote_rm_url = remote_rm_url
+        self.use_lora_disable = use_lora_disable
         self.initial_model = initial_model
         self.tokenizer = tokenizer
         self.prompt_max_len = prompt_max_len
@@ -286,7 +288,12 @@ class NaiveExperienceMaker(ABC):
         action_log_probs = self.actor(sequences, num_actions, attention_mask)
 
         # init log probs
-        base_action_log_probs = self.initial_model(sequences, num_actions, attention_mask)
+        if self.use_lora_disable:
+            self.actor.model.module.disable_adapter_layers()
+            base_action_log_probs = self.actor(sequences, num_actions, attention_mask)
+            self.actor.model.module.enable_adapter_layers()
+        else:
+            base_action_log_probs = self.initial_model(sequences, num_actions, attention_mask)
 
         # values
         if self.critic is not None:

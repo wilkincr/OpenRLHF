@@ -237,6 +237,7 @@ def train(args):
         critic_optim,
         actor_scheduler,
         critic_scheduler,
+        use_lora_disable=args.use_lora_disable,
         max_epochs=args.max_epochs,
         micro_train_batch_size=args.micro_train_batch_size,
         micro_rollout_batch_size=args.micro_rollout_batch_size,
@@ -372,6 +373,7 @@ if __name__ == "__main__":
     parser.add_argument("--lora_alpha", type=int, default=16)
     parser.add_argument("--target_modules", type=str, nargs="*", default="all-linear")
     parser.add_argument("--lora_dropout", type=float, default=0)
+    parser.add_argument("--use_lora_disable", type=bool, default=False)
 
     # Models
     parser.add_argument("--pretrain", type=str, default=None, help="HF model name or path")
@@ -439,5 +441,8 @@ if __name__ == "__main__":
             "[Warning] input_template contains \\n chracters instead of newline. "
             "You likely want to pass $'\\n' in Bash or \"`n\" in PowerShell."
         )
+    
+    if args.use_lora_disable:
+        assert args.target_modules == ["all-linear"], "target_modules must be all-linear when use_lora_disable is True"
 
     train(args)

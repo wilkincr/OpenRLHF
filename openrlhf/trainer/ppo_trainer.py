@@ -61,12 +61,13 @@ class PPOTrainer(ABC):
         actor: Actor,
         critic: nn.Module,
         reward_model: nn.Module,
-        initial_model: Actor,
+        use_lora_disable: bool,
         ema_model: Actor,
         actor_optim: Optimizer,
         critic_optim: Optimizer,
         actor_scheduler,
         critic_scheduler,
+        initial_model: Actor | None = None,
         ema_beta: float = 0.992,
         init_kl_coef: float = 0.001,
         kl_target: float = None,
@@ -117,6 +118,7 @@ class PPOTrainer(ABC):
         self.critic = critic
         self.reward_model = reward_model
         self.remote_rm_url = remote_rm_url
+        self.use_lora_disable = use_lora_disable
         self.initial_model = initial_model
         self.ema_model = ema_model
         self.actor_optim = actor_optim
@@ -142,6 +144,7 @@ class PPOTrainer(ABC):
             actor,
             critic,
             reward_model,
+            use_lora_disable,
             initial_model,
             tokenizer,
             prompt_max_len,
