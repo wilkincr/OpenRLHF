@@ -12,7 +12,7 @@ openrlhf.cli.train_ppo \
    --train_batch_size 8 \
    --micro_rollout_batch_size 2 \
    --rollout_batch_size 8 \
-   --max_epochs 1 \
+   --max_epochs 5 \
    --prompt_max_len 1024 \
    --generate_max_len 1024 \
    --zero_stage 2 \

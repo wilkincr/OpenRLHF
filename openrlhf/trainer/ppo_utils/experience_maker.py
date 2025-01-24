@@ -328,7 +328,7 @@ class NaiveExperienceMaker(ABC):
             use_kl_estimator_k3=self.strategy.args.use_kl_estimator_k3,
         )
 
-        assert torch.all(kl == kl2), "Tensors are not equal"
+        assert torch.all(kl == kl_disable), "Tensors are not equal"
 
         info = {
             "kl": masked_mean(kl, action_mask, dim=-1),
