@@ -126,7 +126,7 @@ class NaiveExperienceMaker(ABC):
         critic: nn.Module,
         reward_model: nn.Module,
         use_lora_disable: bool,
-        initial_model: Actor,
+        initial_model: Actor | None,
         tokenizer,
         prompt_max_len: int,
         kl_controller,
@@ -272,7 +272,8 @@ class NaiveExperienceMaker(ABC):
         Turn samples into experience by calculating logprobs, values, rewards, and kl divergence.
         """
         self.actor.eval()
-        self.initial_model.eval()
+        if self.initial_model is not None:
+            self.initial_model.eval()
         if self.reward_model is not None:
             self.reward_model.eval()
         if self.critic is not None:
@@ -288,17 +289,13 @@ class NaiveExperienceMaker(ABC):
         action_log_probs = self.actor(sequences, num_actions, attention_mask)
 
         # init log probs
-        # if self.use_lora_disable:
-        #     self.actor.model.module.disable_adapter_layers()
-        #     base_action_log_probs = self.actor(sequences, num_actions, attention_mask)
-        #     self.actor.model.module.enable_adapter_layers()
-        # else:
-        #     base_action_log_probs = self.initial_model(sequences, num_actions, attention_mask)
+        if self.use_lora_disable:
+            self.actor.model.module.disable_adapter_layers()
+            base_action_log_probs = self.actor(sequences, num_actions, attention_mask)
+            self.actor.model.module.enable_adapter_layers()
+        else:
+            base_action_log_probs = self.initial_model(sequences, num_actions, attention_mask)
 
-        self.actor.model.module.disable_adapter_layers()
-        base_action_log_probs_disable = self.actor(sequences, num_actions, attention_mask)
-        self.actor.model.module.enable_adapter_layers()
-        base_action_log_probs = self.initial_model(sequences, num_actions, attention_mask)
 
         if self.critic is not None:
             value = self.critic(sequences, num_actions, attention_mask)
@@ -320,15 +317,6 @@ class NaiveExperienceMaker(ABC):
             action_mask=action_mask,
             use_kl_estimator_k3=self.strategy.args.use_kl_estimator_k3,
         )
-
-        kl_disable = compute_approx_kl(
-            action_log_probs,
-            base_action_log_probs_disable,
-            action_mask=action_mask,
-            use_kl_estimator_k3=self.strategy.args.use_kl_estimator_k3,
-        )
-
-        assert torch.all(kl == kl_disable), "Tensors are not equal"
 
         info = {
             "kl": masked_mean(kl, action_mask, dim=-1),
