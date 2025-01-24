@@ -373,7 +373,7 @@ if __name__ == "__main__":
     parser.add_argument("--lora_alpha", type=int, default=16)
     parser.add_argument("--target_modules", type=str, nargs="*", default="all-linear")
     parser.add_argument("--lora_dropout", type=float, default=0)
-    parser.add_argument("--use_lora_disable", type=bool, default=False)
+    parser.add_argument("--use_lora_disable", action="store_true", default=False)
 
     # Models
     parser.add_argument("--pretrain", type=str, default=None, help="HF model name or path")
@@ -443,6 +443,6 @@ if __name__ == "__main__":
         )
     
     if args.use_lora_disable:
-        assert args.target_modules == ["all-linear"], "target_modules must be all-linear when use_lora_disable is True"
+        assert args.target_modules == "all-linear", "target_modules must be all-linear when use_lora_disable is True"
 
     train(args)
