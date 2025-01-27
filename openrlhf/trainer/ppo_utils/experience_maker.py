@@ -290,9 +290,9 @@ class NaiveExperienceMaker(ABC):
 
         # init log probs
         if self.use_lora_disable:
-            self.actor.model.module.disable_adapter_layers()
+            self.actor._unwrap_model().disable_adapter_layers()
             base_action_log_probs = self.actor(sequences, num_actions, attention_mask)
-            self.actor.model.module.enable_adapter_layers()
+            self.actor._unwrap_model().enable_adapter_layers()
         else:
             base_action_log_probs = self.initial_model(sequences, num_actions, attention_mask)
 
@@ -464,6 +464,14 @@ class NaiveExperienceMaker(ABC):
             returns[:, t] = cumulative_return
 
         return returns
+
+    def _unwrap_model(model) -> nn.Module:
+        if isinstance(model, Actor):
+            return unwrap_model(model.model)
+        elif hasattr(model, "module"):
+            return model.module
+        else:
+            return model
 
 
 class RemoteExperienceMaker(NaiveExperienceMaker):
